@@ -160,4 +160,7 @@ export function audit(businessId, userId, action, entity, entityId, details='') 
 // Seed default business
 db.prepare("INSERT OR IGNORE INTO businesses(id,name,category,currency) VALUES(1,'My Business','Retail','NPR')").run();
 try { db.exec("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''"); } catch(e){}
+try { db.exec("ALTER TABLE users ADD COLUMN reset_code TEXT DEFAULT ''"); } catch(e){}
+try { db.exec("ALTER TABLE users ADD COLUMN reset_token TEXT DEFAULT ''"); } catch(e){}
+try { db.exec("ALTER TABLE users ADD COLUMN reset_expires INTEGER DEFAULT 0"); } catch(e){}
 try { db.exec("ALTER TABLE businesses ADD COLUMN phone TEXT DEFAULT ''"); } catch(e){}

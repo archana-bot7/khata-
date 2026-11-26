@@ -7,7 +7,7 @@ import {
   Upload, FileText, Plus, ShieldCheck, ClipboardList, Receipt, TrendingUp,
   CircleDollarSign, FileSpreadsheet, HandCoins, ArrowUpRight, ArrowDownLeft,
   Calendar, Eye, ExternalLink, HelpCircle, Layers, Check, Search, LogOut,
-  User, Phone, MapPin, Briefcase, Lock, Globe, KeyRound, UserPlus
+  User, Phone, MapPin, Briefcase, Lock, Globe, KeyRound, UserPlus, Mail, ArrowLeft
 } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend
@@ -45,9 +45,10 @@ const I18N = {
     tagline: "Let's make today a productive business day.",
     loginTab: 'Log In',
     signupTab: 'Sign Up',
-    loginSubtitle: 'Log in with your phone number and password',
+    loginSubtitle: 'Log in with your Phone Number / Gmail Account and password',
     signupSubtitle: 'Register your business workspace with Khata AI',
-    phone: 'Phone Number',
+    phone: 'Phone Number / Gmail Account',
+    phonePlaceholder: 'e.g. 9841234567 or you@gmail.com',
     password: 'Password',
     userName: 'User Name',
     businessName: 'Name of the Business',
@@ -56,6 +57,23 @@ const I18N = {
     signupBtn: 'Create Khata AI Account',
     alreadyHaveAcc: 'Already have an account? Log In',
     dontHaveAcc: "Don't have an account? Sign Up",
+    forgotPassword: 'Forgot Password?',
+    resetPasswordTitle: 'Reset Password',
+    resetSubtitle: 'Enter your Phone Number or Gmail Account to reset your password',
+    sendResetCode: 'Send Verification Code',
+    resendCode: 'Resend Verification Code',
+    verificationCode: '6-Digit Verification Code',
+    codePlaceholder: 'e.g. 123456',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm New Password',
+    resetPasswordBtn: 'Update & Reset Password',
+    backToLogin: 'Back to Log In',
+    codeSentNotice: 'Verification code generated for',
+    codeAutoFilled: 'Use this 6-digit code and set your new password below.',
+    passwordResetSuccess: 'Password reset successfully! Please log in with your new password.',
+    passwordsDoNotMatch: 'Passwords do not match. Please verify.',
+    fillResetFields: 'Please enter verification code and new password.',
+    fillPhoneOrEmail: 'Please enter your phone number or Gmail account.',
     langPrompt: 'Available in 3 languages:',
     secureNote: 'Encrypted Session · Auto-syncs with SQLite & Excel',
     todaysSales: "Today's sales",
@@ -87,9 +105,10 @@ const I18N = {
     tagline: 'आजको दिनलाई व्यावसायिक रूपमा सफल बनाऔं।',
     loginTab: 'लगइन गर्नुहोस्',
     signupTab: 'साइन अप (नयाँ खाता)',
-    loginSubtitle: 'लगइन गर्न आफ्नो फोन नम्बर र पासवर्ड प्रविष्ट गर्नुहोस्',
+    loginSubtitle: 'आफ्नो फोन नम्बर / जिमेल खाता र पासवर्डले लगइन गर्नुहोस्',
     signupSubtitle: 'खाता AI मा आफ्नो नयाँ व्यवसाय दर्ता गर्नुहोस्',
-    phone: 'फोन नम्बर',
+    phone: 'फोन नम्बर / जिमेल (Gmail) खाता',
+    phonePlaceholder: 'जस्तै: ९८४१२३४५६७ वा name@gmail.com',
     password: 'पासवर्ड',
     userName: 'प्रयोगकर्ताको नाम',
     businessName: 'व्यवसायको नाम',
@@ -98,6 +117,23 @@ const I18N = {
     signupBtn: 'खाता AI दर्ता गर्नुहोस्',
     alreadyHaveAcc: 'पहिले नै खाता छ? लगइन गर्नुहोस्',
     dontHaveAcc: 'खाता छैन? यहाँ नयाँ खाता बनाउनुहोस्',
+    forgotPassword: 'पासवर्ड बिर्सनुभयो?',
+    resetPasswordTitle: 'पासवर्ड रिसेट गर्नुहोस्',
+    resetSubtitle: 'आफ्नो फोन नम्बर वा जिमेल खाताबाट पासवर्ड रिसेट गर्नुहोस्',
+    sendResetCode: 'प्रमाणीकरण कोड पठाउनुहोस्',
+    resendCode: 'कोड पुनः पठाउनुहोस्',
+    verificationCode: '६-अंकको प्रमाणीकरण कोड',
+    codePlaceholder: 'जस्तै: १२३४५६',
+    newPassword: 'नयाँ पासवर्ड',
+    confirmPassword: 'नयाँ पासवर्ड पुनः पुष्टि गर्नुहोस्',
+    resetPasswordBtn: 'नयाँ पासवर्ड सुरक्षित गर्नुहोस्',
+    backToLogin: 'लगइनमा फर्कनुहोस्',
+    codeSentNotice: 'प्रमाणीकरण कोड तयार गरियो:',
+    codeAutoFilled: 'यो ६-अंकको कोड प्रयोग गरेर तल नयाँ पासवर्ड राख्नुहोस्।',
+    passwordResetSuccess: 'पासवर्ड सफलतापूर्वक परिवर्तन भयो! अब नयाँ पासवर्डले लगइन गर्नुहोस्।',
+    passwordsDoNotMatch: 'दुवै पासवर्ड मिलेन। कृपया फेरि जाँच्नुहोस्।',
+    fillResetFields: 'कृपया प्रमाणीकरण कोड र नयाँ पासवर्ड प्रविष्ट गर्नुहोस्।',
+    fillPhoneOrEmail: 'कृपया आफ्नो फोन नम्बर वा जिमेल खाता प्रविष्ट गर्नुहोस्।',
     langPrompt: '३ भाषामा उपलब्ध छ:',
     secureNote: 'सुरक्षित सत्र · SQLite र Excel सँग प्रत्यक्ष सिङ्क',
     todaysSales: 'आजको बिक्री',
@@ -129,9 +165,10 @@ const I18N = {
     tagline: 'आइए आज के दिन को व्यापारिक दृष्टि से सफल बनाएं।',
     loginTab: 'लॉग इन करें',
     signupTab: 'साइन अप (नया खाता)',
-    loginSubtitle: 'लॉग इन करने के लिए अपना फोन नंबर और पासवर्ड दर्ज करें',
+    loginSubtitle: 'अपने फ़ोन नंबर / जीमेल खाते और पासवर्ड से लॉग इन करें',
     signupSubtitle: 'खाता AI पर अपने नए व्यवसाय का पंजीकरण करें',
-    phone: 'फ़ोन नंबर',
+    phone: 'फ़ोन नंबर / जीमेल (Gmail) खाता',
+    phonePlaceholder: 'जैसे: 9841234567 या name@gmail.com',
     password: 'पासवर्ड',
     userName: 'उपयोगकर्ता का नाम',
     businessName: 'व्यवसाय का नाम',
@@ -140,6 +177,23 @@ const I18N = {
     signupBtn: 'खाता AI खाता बनाएं',
     alreadyHaveAcc: 'पहले से खाता है? लॉग इन करें',
     dontHaveAcc: 'खाता नहीं है? नया खाता बनाएं',
+    forgotPassword: 'पासवर्ड भूल गए?',
+    resetPasswordTitle: 'पासवर्ड रीसेट करें',
+    resetSubtitle: 'अपने फ़ोन नंबर या जीमेल खाते से पासवर्ड रीसेट करें',
+    sendResetCode: 'सत्यापन कोड भेजें',
+    resendCode: 'सत्यापन कोड पुनः भेजें',
+    verificationCode: '६-अंकों का सत्यापन कोड',
+    codePlaceholder: 'जैसे: 123456',
+    newPassword: 'नया पासवर्ड',
+    confirmPassword: 'नए पासवर्ड की पुष्टि करें',
+    resetPasswordBtn: 'नया पासवर्ड सहेजें',
+    backToLogin: 'लॉग इन पर वापस जाएं',
+    codeSentNotice: 'सत्यापन कोड भेजा गया:',
+    codeAutoFilled: 'इस ६-अंकों के कोड का उपयोग करके नीचे नया पासवर्ड दर्ज करें।',
+    passwordResetSuccess: 'पासवर्ड सफलतापूर्वक रीसेट हो गया! अब नए पासवर्ड से लॉग इन करें।',
+    passwordsDoNotMatch: 'पासवर्ड मेल नहीं खाते। कृपया पुनः प्रयास करें।',
+    fillResetFields: 'कृपया सत्यापन कोड और नया पासवर्ड दर्ज करें।',
+    fillPhoneOrEmail: 'कृपया अपना फ़ोन नंबर या जीमेल खाता दर्ज करें।',
     langPrompt: '३ भाषाओं में उपलब्ध:',
     secureNote: 'सुरक्षित सत्र · SQLite और Excel के साथ लाइव सिंक',
     todaysSales: 'आज की बिक्री',
@@ -168,10 +222,13 @@ const I18N = {
   }
 };
 
-function Field({ label, value, onChange, type = 'text', placeholder = '', required = false, icon: Icon }) {
+function Field({ label, value, onChange, type = 'text', placeholder = '', required = false, icon: Icon, rightElement = null }) {
   return (
     <label className="field">
-      <span>{label}{required && <em style={{ color: '#ef4444' }}> *</em>}</span>
+      <div className="field-label-row">
+        <span>{label}{required && <em style={{ color: '#ef4444' }}> *</em>}</span>
+        {rightElement}
+      </div>
       <div className="input-with-icon">
         {Icon && <Icon size={16} className="field-icon" />}
         <input
@@ -187,16 +244,23 @@ function Field({ label, value, onChange, type = 'text', placeholder = '', requir
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTHENTICATION & LOGIN/SIGNUP PAGE
+// AUTHENTICATION & LOGIN/SIGNUP/FORGOT PASSWORD PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 function LoginPage({ onLoginSuccess, lang, setLang }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'forgot'
+  const [resetStep, setResetStep] = useState(1); // 1: send code, 2: reset password
+  const [generatedCode, setGeneratedCode] = useState('');   // only set if code shown on screen
+  const [codeDelivery, setCodeDelivery] = useState(null);   // { isEmail, emailSent, maskedDest }
+  const [successMsg, setSuccessMsg] = useState('');
   const [form, setForm] = useState({
     userName: '',
     businessName: '',
     address: '',
     phone: '',
-    password: ''
+    password: '',
+    resetCode: '',
+    newPassword: '',
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -207,15 +271,16 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
 
     if (mode === 'signup') {
       if (!form.userName.trim() || !form.businessName.trim() || !form.phone.trim() || !form.password.trim()) {
-        setError('Please fill in User name, Business name, Phone number, and Password.');
+        setError('Please fill in User name, Business name, Phone number / Gmail, and Password.');
         return;
       }
     } else {
       if (!form.phone.trim() || !form.password.trim()) {
-        setError('Please enter your Phone number and Password.');
+        setError(t.fillPhoneOrEmail || 'Please enter your Phone number / Gmail and Password.');
         return;
       }
     }
@@ -243,6 +308,86 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
       }));
 
       onLoginSuccess(data.user, data.business);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestResetCode = async (e) => {
+    if (e) e.preventDefault();
+    setError('');
+    setSuccessMsg('');
+    if (!form.phone.trim()) {
+      setError(t.fillPhoneOrEmail);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(API + '/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: form.phone.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate reset code');
+
+      // Track whether code was emailed or shown on screen
+      setCodeDelivery({
+        isEmail: data.isEmail,
+        emailSent: data.emailSent,
+      });
+
+      if (data.code) {
+        // Code shown on screen (phone user, or SMTP not configured)
+        setGeneratedCode(data.code);
+        setForm(f => ({ ...f, resetCode: data.code }));
+      } else {
+        // Email was sent — clear any old code
+        setGeneratedCode('');
+        setForm(f => ({ ...f, resetCode: '' }));
+      }
+
+      setSuccessMsg(data.message);
+      setResetStep(2);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMsg('');
+    if (!form.phone.trim() || !form.resetCode.trim() || !form.newPassword.trim()) {
+      setError(t.fillResetFields);
+      return;
+    }
+    if (form.newPassword !== form.confirmPassword) {
+      setError(t.passwordsDoNotMatch);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(API + '/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: form.phone.trim(),
+          code: form.resetCode.trim(),
+          newPassword: form.newPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+
+      setMode('login');
+      setResetStep(1);
+      setForm(f => ({ ...f, password: f.newPassword, newPassword: '', confirmPassword: '', resetCode: '' }));
+      setSuccessMsg(t.passwordResetSuccess);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -287,31 +432,33 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
         {/* Brand Header */}
         <div className="login-brand">
           <div className="login-logo-badge">
-            <Sparkles size={24} />
+            {mode === 'forgot' ? <KeyRound size={24} /> : <Sparkles size={24} />}
           </div>
-          <h1>{t.welcome}</h1>
-          <p>{mode === 'login' ? t.loginSubtitle : t.signupSubtitle}</p>
+          <h1>{mode === 'forgot' ? t.resetPasswordTitle : t.welcome}</h1>
+          <p>{mode === 'forgot' ? t.resetSubtitle : (mode === 'login' ? t.loginSubtitle : t.signupSubtitle)}</p>
         </div>
 
         {/* Mode Switcher Tabs (Login vs Sign Up) */}
-        <div className="auth-mode-tabs">
-          <button
-            type="button"
-            className={'auth-mode-tab ' + (mode === 'login' ? 'active' : '')}
-            onClick={() => { setMode('login'); setError(''); }}
-          >
-            <KeyRound size={15} />
-            <span>{t.loginTab}</span>
-          </button>
-          <button
-            type="button"
-            className={'auth-mode-tab ' + (mode === 'signup' ? 'active' : '')}
-            onClick={() => { setMode('signup'); setError(''); }}
-          >
-            <UserPlus size={15} />
-            <span>{t.signupTab}</span>
-          </button>
-        </div>
+        {mode !== 'forgot' && (
+          <div className="auth-mode-tabs">
+            <button
+              type="button"
+              className={'auth-mode-tab ' + (mode === 'login' ? 'active' : '')}
+              onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); setCodeDelivery(null); }}
+            >
+              <KeyRound size={15} />
+              <span>{t.loginTab}</span>
+            </button>
+            <button
+              type="button"
+              className={'auth-mode-tab ' + (mode === 'signup' ? 'active' : '')}
+              onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); setCodeDelivery(null); }}
+            >
+              <UserPlus size={15} />
+              <span>{t.signupTab}</span>
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="login-error-alert">
@@ -320,83 +467,226 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
           </div>
         )}
 
-        {/* Auth Form */}
-        <form className="login-form" onSubmit={handleSubmit}>
-          {mode === 'signup' && (
-            <>
-              <Field
-                label={t.userName}
-                icon={User}
-                value={form.userName}
-                onChange={fset('userName')}
-                placeholder="e.g. Ramesh Sharma"
-                required
-              />
+        {successMsg && (
+          <div className="login-success-alert">
+            <CheckCircle2 size={16} />
+            <span>{successMsg}</span>
+          </div>
+        )}
 
-              <Field
-                label={t.businessName}
-                icon={Briefcase}
-                value={form.businessName}
-                onChange={fset('businessName')}
-                placeholder="e.g. Sharma Grocery & Traders"
-                required
-              />
+        {/* Forgot Password Flow */}
+        {mode === 'forgot' ? (
+          <form className="login-form" onSubmit={resetStep === 1 ? handleRequestResetCode : handleResetPassword}>
+            <Field
+              label={t.phone}
+              icon={Phone}
+              value={form.phone}
+              onChange={fset('phone')}
+              type="text"
+              placeholder={t.phonePlaceholder}
+              required
+            />
 
-              <Field
-                label={t.address}
-                icon={MapPin}
-                value={form.address}
-                onChange={fset('address')}
-                placeholder="e.g. New Road, Kathmandu"
-              />
-            </>
-          )}
-
-          <Field
-            label={t.phone}
-            icon={Phone}
-            value={form.phone}
-            onChange={fset('phone')}
-            type="tel"
-            placeholder="e.g. 9841234567"
-            required
-          />
-
-          <Field
-            label={t.password}
-            icon={Lock}
-            value={form.password}
-            onChange={fset('password')}
-            type="password"
-            placeholder="••••••••"
-            required
-          />
-
-          <button type="submit" className="login-submit-btn" disabled={loading}>
-            {loading ? (
+            {resetStep === 2 && (
               <>
-                <RefreshCw size={16} className="spin" />
-                <span>Processing…</span>
-              </>
-            ) : (
-              <>
-                <span>{mode === 'login' ? t.loginBtn : t.signupBtn}</span>
-                <ArrowUpRight size={18} />
+                {/* Show different panel depending on delivery method */}
+                {codeDelivery?.isEmail && codeDelivery?.emailSent ? (
+                  /* ── Email was sent ── */
+                  <div className="reset-code-box" style={{ background: '#eff6ff', border: '1.5px solid #93c5fd', color: '#1e40af' }}>
+                    <Mail size={22} style={{ flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>Verification code sent to your email</div>
+                      <div style={{ fontSize: 12.5 }}>
+                        A 6-digit code has been sent to <strong>{form.phone}</strong>.<br />
+                        Please check your inbox (and Spam folder) and enter the code below.
+                      </div>
+                    </div>
+                  </div>
+                ) : generatedCode ? (
+                  /* ── Code shown on screen (phone user or SMTP not configured) ── */
+                  <div className="reset-code-box">
+                    <CheckCircle2 size={20} style={{ flexShrink: 0 }} />
+                    <div>
+                      <div>
+                        {codeDelivery?.isEmail
+                          ? '⚠️ Email delivery not configured. Use this code to reset:'
+                          : `${t.codeSentNotice} `}
+                        {!codeDelivery?.isEmail && <strong>{form.phone}</strong>}
+                      </div>
+                      <div style={{ marginTop: 4 }}>
+                        <span className="reset-code-badge">{generatedCode}</span>
+                        <span>{t.codeAutoFilled}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                <Field
+                  label={t.verificationCode}
+                  icon={KeyRound}
+                  value={form.resetCode}
+                  onChange={fset('resetCode')}
+                  placeholder={t.codePlaceholder}
+                  required
+                  rightElement={
+                    <button
+                      type="button"
+                      className="forgot-password-link"
+                      onClick={handleRequestResetCode}
+                    >
+                      {t.resendCode}
+                    </button>
+                  }
+                />
+
+                <Field
+                  label={t.newPassword}
+                  icon={Lock}
+                  value={form.newPassword}
+                  onChange={fset('newPassword')}
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                />
+
+                <Field
+                  label={t.confirmPassword}
+                  icon={Lock}
+                  value={form.confirmPassword}
+                  onChange={fset('confirmPassword')}
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                />
               </>
             )}
-          </button>
 
-          {/* Toggle Helper Link */}
-          <div
-            className="auth-toggle-link"
-            onClick={() => {
-              setMode(m => (m === 'login' ? 'signup' : 'login'));
-              setError('');
-            }}
-          >
-            {mode === 'login' ? t.dontHaveAcc : t.alreadyHaveAcc}
-          </div>
-        </form>
+            <button type="submit" className="login-submit-btn" disabled={loading}>
+              {loading ? (
+                <>
+                  <RefreshCw size={16} className="spin" />
+                  <span>Processing…</span>
+                </>
+              ) : (
+                <>
+                  <span>{resetStep === 1 ? t.sendResetCode : t.resetPasswordBtn}</span>
+                  <ArrowUpRight size={18} />
+                </>
+              )}
+            </button>
+
+            <div
+              className="auth-toggle-link"
+              onClick={() => {
+                setMode('login');
+                setError('');
+                setSuccessMsg('');
+                setResetStep(1);
+                setCodeDelivery(null);
+              }}
+            >
+              ← {t.backToLogin}
+            </div>
+          </form>
+        ) : (
+          /* Auth Form (Login or Signup) */
+          <form className="login-form" onSubmit={handleSubmit}>
+            {mode === 'signup' && (
+              <>
+                <Field
+                  label={t.userName}
+                  icon={User}
+                  value={form.userName}
+                  onChange={fset('userName')}
+                  placeholder="e.g. Ramesh Sharma"
+                  required
+                />
+
+                <Field
+                  label={t.businessName}
+                  icon={Briefcase}
+                  value={form.businessName}
+                  onChange={fset('businessName')}
+                  placeholder="e.g. Sharma Grocery & Traders"
+                  required
+                />
+
+                <Field
+                  label={t.address}
+                  icon={MapPin}
+                  value={form.address}
+                  onChange={fset('address')}
+                  placeholder="e.g. New Road, Kathmandu"
+                />
+              </>
+            )}
+
+            <Field
+              label={t.phone}
+              icon={Phone}
+              value={form.phone}
+              onChange={fset('phone')}
+              type="text"
+              placeholder={t.phonePlaceholder}
+              required
+            />
+
+            <Field
+              label={t.password}
+              icon={Lock}
+              value={form.password}
+              onChange={fset('password')}
+              type="password"
+              placeholder="••••••••"
+              required
+              rightElement={
+                mode === 'login' ? (
+                  <button
+                    type="button"
+                    className="forgot-password-link"
+                    onClick={() => {
+                      setMode('forgot');
+                      setError('');
+                      setSuccessMsg('');
+                      setResetStep(1);
+                      setCodeDelivery(null);
+                      setGeneratedCode('');
+                    }}
+                  >
+                    {t.forgotPassword}
+                  </button>
+                ) : null
+              }
+            />
+
+            <button type="submit" className="login-submit-btn" disabled={loading}>
+              {loading ? (
+                <>
+                  <RefreshCw size={16} className="spin" />
+                  <span>Processing…</span>
+                </>
+              ) : (
+                <>
+                  <span>{mode === 'login' ? t.loginBtn : t.signupBtn}</span>
+                  <ArrowUpRight size={18} />
+                </>
+              )}
+            </button>
+
+            {/* Toggle Helper Link */}
+            <div
+              className="auth-toggle-link"
+              onClick={() => {
+                setMode(m => (m === 'login' ? 'signup' : 'login'));
+                setError('');
+                setSuccessMsg('');
+                setCodeDelivery(null);
+              }}
+            >
+              {mode === 'login' ? t.dontHaveAcc : t.alreadyHaveAcc}
+            </div>
+          </form>
+        )}
 
         <div className="login-card-footer">
           <ShieldCheck size={16} className="shield-icon" />
@@ -2178,8 +2468,8 @@ function PageSettings({ settings, currentUser, onEdit }) {
           <b>{settings?.name || currentUser?.businessName || 'My Business'}</b>
         </div>
         <div className="settings-row">
-          <span>Phone Number</span>
-          <b>{currentUser?.phone || settings?.phone || '—'}</b>
+          <span>Phone / Gmail Account</span>
+          <b>{currentUser?.phone || currentUser?.email || settings?.phone || '—'}</b>
         </div>
         <div className="settings-row">
           <span>Address</span>

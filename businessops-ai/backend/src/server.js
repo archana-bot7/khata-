@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -18,6 +19,64 @@ const require=createRequire(import.meta.url);
 const multer=require('multer');
 
 const app=express(), PORT=process.env.PORT||4000, SECRET=process.env.JWT_SECRET||'local-development-secret-change-me';
+
+// ─── Nodemailer transporter (Gmail / SMTP) ────────────────────────────────
+const SMTP_USER = process.env.email_user || process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.email_password || process.env.SMTP_PASS || '';
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
+
+let transporter = null;
+if (SMTP_USER && SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+  transporter.verify().then(() => {
+    console.log('✅ Nodemailer SMTP ready — emails will be sent');
+  }).catch(e => {
+    console.warn('⚠️  Nodemailer SMTP not reachable:', e.message);
+    transporter = null;
+  });
+}
+
+async function sendResetEmail(toEmail, userName, code) {
+  if (!transporter) return false;
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8fafc;border-radius:12px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="display:inline-block;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:12px;padding:12px 20px;">
+          <span style="color:#fff;font-size:22px;font-weight:800;">✦ Khata AI</span>
+        </div>
+      </div>
+      <h2 style="color:#0f172a;margin-bottom:8px;">Password Reset Request</h2>
+      <p style="color:#475569;margin-bottom:20px;">Hi <strong>${userName}</strong>, we received a request to reset your Khata AI password.</p>
+      <div style="background:#fff;border:2px solid #e2e8f0;border-radius:10px;padding:20px 24px;text-align:center;margin-bottom:20px;">
+        <p style="color:#64748b;font-size:13px;margin:0 0 8px;">Your 6-digit verification code:</p>
+        <div style="font-family:monospace;font-size:36px;font-weight:800;letter-spacing:8px;color:#1e40af;">${code}</div>
+        <p style="color:#94a3b8;font-size:12px;margin:10px 0 0;">Valid for <strong>15 minutes</strong>. Do not share this code.</p>
+      </div>
+      <p style="color:#64748b;font-size:13px;">If you did not request this, you can safely ignore this email — your password will remain unchanged.</p>
+      <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+      <p style="color:#94a3b8;font-size:11px;text-align:center;">© ${new Date().getFullYear()} Khata AI · Secure Business Management</p>
+    </div>`;
+  try {
+    await transporter.sendMail({
+      from: `"Khata AI" <${SMTP_FROM}>`,
+      to: toEmail,
+      subject: '🔑 Khata AI — Password Reset Code',
+      html,
+      text: `Hi ${userName},\n\nYour Khata AI password reset code is: ${code}\n\nThis code is valid for 15 minutes.\n\nIf you did not request this, ignore this email.\n\n— Khata AI`
+    });
+    return true;
+  } catch(e) {
+    console.error('Email send error:', e.message);
+    return false;
+  }
+}
 
 // Upload storage
 const uploadsDir=path.resolve(__dirname,'../uploads');
@@ -64,28 +123,38 @@ app.post('/api/auth/khata-signup',async(req,res)=>{
       userName: z.string().min(1,'User name is required'),
       businessName: z.string().min(1,'Name of the business is required'),
       address: z.string().optional().default(''),
-      phone: z.string().min(4,'Phone number is required'),
+      phone: z.string().min(3,'Phone number or Gmail account is required'),
       password: z.string().min(4,'Password must be at least 4 characters')
     }).parse(req.body);
 
-    const email=s.phone.replace(/[^0-9a-zA-Z]/g,'')+'@khata.ai';
-    const existing=db.prepare('SELECT * FROM users WHERE phone=? OR email=?').get(s.phone,email);
+    const input = s.phone.trim();
+    const isEmail = input.includes('@');
+    const email = isEmail ? input.toLowerCase() : input.replace(/[^0-9a-zA-Z]/g,'')+'@khata.ai';
+    const phone = input;
+
+    const existing=db.prepare(`
+      SELECT * FROM users 
+      WHERE LOWER(phone)=LOWER(?) 
+         OR LOWER(email)=LOWER(?) 
+         OR LOWER(email)=LOWER(?)
+    `).get(input, email, phone);
+
     if(existing){
-      return res.status(400).json({error:`An account with phone ${s.phone} already exists. Please log in instead.`});
+      return res.status(400).json({error:`An account with ${input} already exists. Please log in or reset your password.`});
     }
 
     const hash=await bcrypt.hash(s.password,10);
     const tx=db.transaction(()=>{
       const bResult=db.prepare('INSERT INTO businesses(name,category,currency,address,phone) VALUES(?,?,?,?,?)')
-        .run(s.businessName,'Retail','NPR',s.address,s.phone);
+        .run(s.businessName,'Retail','NPR',s.address,phone);
       const uResult=db.prepare('INSERT INTO users(business_id,name,email,phone,password_hash,role) VALUES(?,?,?,?,?,?)')
-        .run(bResult.lastInsertRowid,s.userName,email,s.phone,hash,'owner');
+        .run(bResult.lastInsertRowid,s.userName,email,phone,hash,'owner');
       return {
         id:uResult.lastInsertRowid,
         business_id:bResult.lastInsertRowid,
         name:s.userName,
         email,
-        phone:s.phone,
+        phone,
         role:'owner'
       };
     });
@@ -100,26 +169,128 @@ app.post('/api/auth/khata-signup',async(req,res)=>{
 app.post('/api/auth/khata-login',async(req,res)=>{
   try{
     const s=z.object({
-      phone: z.string().min(4,'Phone number is required'),
+      email: z.string().email('Valid email is required'),
       password: z.string().min(1,'Password is required')
     }).parse(req.body);
 
-    const email=s.phone.replace(/[^0-9a-zA-Z]/g,'')+'@khata.ai';
-    let u=db.prepare('SELECT * FROM users WHERE phone=? OR email=?').get(s.phone,email);
+    const email = s.email.trim().toLowerCase();
+    const u = db.prepare(`
+      SELECT * FROM users 
+      WHERE LOWER(email)=LOWER(?)
+    `).get(email);
 
     if(!u){
-      return res.status(401).json({error:'No account found with this phone number. Please sign up.'});
+      return res.status(401).json({error:'No account found with this email. Please sign up.'});
     }
 
-    const matches=await bcrypt.compare(s.password,u.password_hash);
-    if(!matches && s.password !== u.phone){
-      return res.status(401).json({error:'Incorrect password. Please try again.'});
+    const matches = await bcrypt.compare(s.password, u.password_hash);
+    if(!matches){
+      return res.status(401).json({error:'Incorrect password. Please try again or click Forgot Password.'});
     }
 
     const b=db.prepare('SELECT * FROM businesses WHERE id=?').get(u.business_id);
     const payload={id:u.id,business_id:u.business_id,name:u.name,phone:u.phone,role:u.role||'owner'};
     const token=jwt.sign(payload,SECRET,{expiresIn:'30d'});
     res.json({token,user:payload,business:b});
+  }catch(e){sendError(res,e)}
+});
+
+app.post('/api/auth/forgot-password',async(req,res)=>{
+  try{
+    const s=z.object({
+      phone: z.string().min(3,'Phone number or Gmail account is required')
+    }).parse(req.body);
+
+    const input = s.phone.trim();
+    const emailKhata = input.replace(/[^0-9a-zA-Z]/g,'')+'@khata.ai';
+    const u=db.prepare(`
+      SELECT * FROM users 
+      WHERE LOWER(phone)=LOWER(?) 
+         OR LOWER(email)=LOWER(?) 
+         OR LOWER(email)=LOWER(?)
+    `).get(input, input, emailKhata);
+
+    if(!u){
+      return res.status(404).json({error:'No account found with this phone number or Gmail account. Please check or sign up.'});
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 15 * 60 * 1000; // 15 minutes
+    db.prepare('UPDATE users SET reset_code=?, reset_expires=? WHERE id=?').run(code, expires, u.id);
+    audit(u.business_id, u.id, 'REQUEST_PASSWORD_RESET', 'users', u.id, `Reset code generated for ${input}`);
+
+    // Determine if the account was registered with a real email (not @khata.ai internal)
+    const isRealEmail = u.email && !u.email.endsWith('@khata.ai') && u.email.includes('@');
+    const deliveryEmail = isRealEmail ? u.email : null;
+
+    let emailSent = false;
+    if (deliveryEmail) {
+      emailSent = await sendResetEmail(deliveryEmail, u.name, code);
+    }
+
+    // Build response — only expose the code on screen if no real email delivery happened
+    // (i.e. phone-only accounts or if SMTP is not configured)
+    const response = {
+      ok: true,
+      isEmail: !!deliveryEmail,
+      emailSent,
+      phone: input,
+      userName: u.name,
+      // If a real email was sent successfully, do NOT send the code back (security)
+      // If no email (phone user) or SMTP not configured, show code on screen
+      ...(emailSent
+        ? { message: `A 6-digit verification code has been sent to your email: ${deliveryEmail.replace(/(.{2}).*(@.*)/, '$1***$2')}` }
+        : {
+            code,
+            message: deliveryEmail
+              ? `Email delivery failed — here is your code (configure SMTP in .env to enable email): ${code}`
+              : `Your verification code is shown below. Configure SMTP to enable automatic delivery.`
+          }
+      )
+    };
+
+    res.json(response);
+  }catch(e){sendError(res,e)}
+});
+
+app.post('/api/auth/reset-password',async(req,res)=>{
+  try{
+    const s=z.object({
+      phone: z.string().min(3,'Phone number or Gmail account is required'),
+      code: z.string().min(4,'Verification code is required'),
+      newPassword: z.string().min(4,'New password must be at least 4 characters')
+    }).parse(req.body);
+
+    const input = s.phone.trim();
+    const code = s.code.trim();
+    const emailKhata = input.replace(/[^0-9a-zA-Z]/g,'')+'@khata.ai';
+    const u=db.prepare(`
+      SELECT * FROM users 
+      WHERE LOWER(phone)=LOWER(?) 
+         OR LOWER(email)=LOWER(?) 
+         OR LOWER(email)=LOWER(?)
+    `).get(input, input, emailKhata);
+
+    if(!u){
+      return res.status(404).json({error:'No account found with this phone number or Gmail account.'});
+    }
+
+    if(!u.reset_code || String(u.reset_code).trim() !== code){
+      return res.status(400).json({error:'Incorrect verification code. Please check and enter the 6-digit code.'});
+    }
+
+    if(u.reset_expires && Date.now() > Number(u.reset_expires)){
+      return res.status(400).json({error:'Verification code has expired. Please request a new code.'});
+    }
+
+    const hash = await bcrypt.hash(s.newPassword, 10);
+    db.prepare('UPDATE users SET password_hash=?, reset_code=NULL, reset_expires=NULL WHERE id=?').run(hash, u.id);
+    audit(u.business_id, u.id, 'RESET_PASSWORD_SUCCESS', 'users', u.id, `Password reset successfully for ${input}`);
+
+    res.json({
+      ok: true,
+      message: 'Password reset successfully! You can now log in with your new password.'
+    });
   }catch(e){sendError(res,e)}
 });
 
