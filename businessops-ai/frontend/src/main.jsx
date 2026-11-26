@@ -14,7 +14,8 @@ import {
 } from 'recharts';
 import './style.css';
 
-const API = 'http://localhost:4000/api';
+const BASE_URL = (import.meta.env.VITE_API_URL || 'https://khata-ai-zrbq.onrender.com').replace(/\/+$/, '');
+const API = `${BASE_URL}/api`;
 const DEVANAGARI_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
 const toDevanagariDigits = (val) => String(val).replace(/[0-9]/g, d => DEVANAGARI_DIGITS[Number(d)]);
 const formatNumber = (n, lang = 'en') => {
@@ -2592,7 +2593,7 @@ function PageInvoices({ invoices, onUpload, onDel, onExport, onViewExcel }) {
                   <td>{inv.created_at?.slice(0, 10)}</td>
                   <td>
                     <a
-                      href={`http://localhost:4000/uploads/${inv.filename}`}
+                      href={`${BASE_URL}/uploads/${inv.filename}`}
                       target="_blank"
                       rel="noreferrer"
                       className="view-link"

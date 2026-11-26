@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 
-const API = 'http://localhost:4000/api';
+const API = (import.meta.env.VITE_API_URL || 'https://khata-ai-zrbq.onrender.com').replace(/\/+$/, '') + '/api';
 const money = n => 'NPR ' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
 export default function LandingPage() {
