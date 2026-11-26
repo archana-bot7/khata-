@@ -15,7 +15,19 @@ import {
 import './style.css';
 
 const API = 'http://localhost:4000/api';
-const money = (n) => 'NPR ' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const DEVANAGARI_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+const toDevanagariDigits = (val) => String(val).replace(/[0-9]/g, d => DEVANAGARI_DIGITS[Number(d)]);
+const formatNumber = (n, lang = 'en') => {
+  const formatted = Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  return (lang === 'ne' || lang === 'hi') ? toDevanagariDigits(formatted) : formatted;
+};
+const formatMoney = (n, lang = 'en') => {
+  const numStr = formatNumber(n, lang);
+  if (lang === 'ne') return 'रू ' + numStr;
+  if (lang === 'hi') return 'रु. ' + numStr;
+  return 'NPR ' + numStr;
+};
+const money = (n) => formatMoney(n, localStorage.getItem('bo_lang') || 'en');
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('bo_token');
@@ -45,9 +57,15 @@ const I18N = {
     tagline: "Let's make today a productive business day.",
     loginTab: 'Log In',
     signupTab: 'Sign Up',
-    loginSubtitle: 'Log in with your Phone Number / Gmail Account and password',
+    loginSubtitle: 'Log in with your Gmail Account and password',
     signupSubtitle: 'Register your business workspace with Khata AI',
-    phone: 'Phone Number / Gmail Account',
+    gmailLabel: 'Gmail Account',
+    gmailPlaceholder: 'e.g. you@gmail.com',
+    phoneLabel: 'Phone Number',
+    phonePlaceholderSignup: 'e.g. 9841234567',
+    emailLabel: 'Gmail Account',
+    emailPlaceholderSignup: 'e.g. you@gmail.com',
+    phone: 'Phone Number or Gmail Account',
     phonePlaceholder: 'e.g. 9841234567 or you@gmail.com',
     password: 'Password',
     userName: 'User Name',
@@ -73,41 +91,119 @@ const I18N = {
     passwordResetSuccess: 'Password reset successfully! Please log in with your new password.',
     passwordsDoNotMatch: 'Passwords do not match. Please verify.',
     fillResetFields: 'Please enter verification code and new password.',
-    fillPhoneOrEmail: 'Please enter your phone number or Gmail account.',
+    fillPhoneOrEmail: 'Please enter your Gmail account.',
+    fillSignupFields: 'Please fill in all required fields (name, business, phone, Gmail, password).',
     langPrompt: 'Available in 3 languages:',
     secureNote: 'Encrypted Session · Auto-syncs with SQLite & Excel',
-    todaysSales: "Today's sales",
-    monthlyRevenue: 'Monthly revenue',
-    totalExpenses: 'Total expenses',
-    netProfit: 'Net profit',
-    toReceive: 'To receive',
-    toPay: 'To pay',
-    quickActions: 'Quick actions',
+    signupSuccess: 'Account created! Please log in with your Gmail and password.',
+    todaysSales: "Today's Sales",
+    monthlyRevenue: 'Monthly Revenue',
+    totalExpenses: 'Total Expenses',
+    netProfit: 'Net Profit',
+    toReceive: 'To Receive',
+    toPay: 'To Pay',
+    quickActions: 'Quick Actions',
     quickTagline: 'A little less admin. A lot more business.',
-    uploadInvoice: 'Upload invoice',
-    addSale: 'Add sale',
-    addProduct: 'Add product',
-    purchaseOrder: 'Purchase order',
-    recordPayment: 'Record payment',
-    addExpense: 'Add expense',
-    revExpenses: 'Revenue & expenses',
-    businessInsights: 'Business insights',
-    recentSales: 'Recent sales',
-    stockOverview: 'Stock overview',
+    uploadInvoice: 'Upload Invoice',
+    addSale: 'Add Sale',
+    addProduct: 'Add Product',
+    purchaseOrder: 'Purchase Order',
+    recordPayment: 'Record Payment',
+    addExpense: 'Add Expense',
+    revExpenses: 'Revenue & Expenses',
+    businessInsights: 'Business Insights',
+    recentSales: 'Recent Sales',
+    stockOverview: 'Stock Overview',
     signOut: 'Sign Out',
     excelSheets: 'In-App Excel Sheets',
     dataDriven: 'Data-driven',
-    viewAll: 'View all',
-    inventory: 'Inventory'
+    viewAll: 'View All',
+    inventory: 'Inventory',
+    salesRecordedToday: 'Sales Recorded Today',
+    netSalesMonth: 'Net Sales This Month',
+    operatingExpenses: 'Operating Expenses',
+    revMinusCost: 'Revenue Minus Cost',
+    outstandingCustomer: 'Outstanding Customer',
+    outstandingSupplier: 'Outstanding Supplier',
+    yourFirstSale: 'Your First Sale',
+    invoicesAppear: 'Invoices Appear',
+    stockView: 'Stock View',
+    addProductsTrack: 'Add Products Track',
+    totalProducts: 'Total Products',
+    lowStockItems: 'Low Stock Items',
+    unitsInStock: 'Units in Stock',
+    stockValue: 'Stock Value',
+    startWorkspace: 'Start Workspace',
+    recordTransaction: 'Record a transaction',
+    goodDecisions: 'Good Decisions',
+    insightsAppear: 'Insights Appear',
+    addFirstProduct: 'Add First Product',
+    yourPerformance: 'Your Performance',
+    thisMonth: 'This month',
+    last7Days: 'Last 7 days',
+    noTransactions: 'No transactions in this period. Chart updates when you record transactions.',
+    revenue: 'Revenue',
+    expenses: 'Expenses',
+    liveExcelSync: 'Live Excel Sync',
+    excelSyncDesc: 'Every sale, invoice, and payment automatically updates your Excel sheets in real time.',
+    openSalesSheet: 'Open Sales Sheet',
+    openInvoicesSheet: 'Open Invoices Sheet',
+    paid: 'Paid',
+    walkIn: 'Walk-in Customer',
+    secureConnected: 'Securely connected',
+    deleteConfirm: 'Are you sure you want to delete this record?',
+    recordDeleted: 'Record deleted successfully ✓',
+    processing: 'Processing…',
+    syncing: 'Syncing business data…',
+    brandSubtitle: 'INTELLIGENT BUSINESS SAAS',
+    navWorkspace: 'WORKSPACE',
+    navOverview: 'Overview',
+    navSalesInvoices: 'Sales & Invoices',
+    navInventory: 'Inventory',
+    navFinance: 'Finance',
+    navExcelSheets: 'Excel Sheets',
+    navBusinessMgmt: 'BUSINESS MANAGEMENT',
+    navPurchaseOrders: 'Purchase Orders',
+    navSuppliers: 'Suppliers',
+    navCustomers: 'Customers',
+    navInvoices: 'Invoices',
+    navReports: 'Reports',
+    navSettingsHelp: 'SETTINGS & HELP',
+    navSettings: 'Settings',
+    navNotifications: 'Notifications',
+    liveBadge: 'LIVE',
+    sidebarVersion: 'KHATA AI · PRODUCTION V1.0',
+    owner: 'Owner',
+    currencyCode: 'NPR',
+    secureWorkspace: 'Secure Workspace',
+    connected: 'Connected',
+    notificationsTitle: 'Notifications',
+    refreshTitle: 'Refresh workspace',
+    openExcelTitle: 'Open In-App Spreadsheets',
+    colInvoice: 'Invoice',
+    colCustomer: 'Customer',
+    colProduct: 'Product',
+    colAmount: 'Amount',
+    colStatus: 'Status',
+    userNamePlaceholder: 'e.g. Ramesh Sharma',
+    businessNamePlaceholder: 'e.g. Sharma Grocery & Traders',
+    addressPlaceholder: 'e.g. New Road, Kathmandu',
+    emailCodeSentTitle: 'Verification code sent to your email'
   },
   ne: {
     welcome: 'खाता AI मा स्वागत छ',
     tagline: 'आजको दिनलाई व्यावसायिक रूपमा सफल बनाऔं।',
     loginTab: 'लगइन गर्नुहोस्',
     signupTab: 'साइन अप (नयाँ खाता)',
-    loginSubtitle: 'आफ्नो फोन नम्बर / जिमेल खाता र पासवर्डले लगइन गर्नुहोस्',
+    loginSubtitle: 'आफ्नो जिमेल खाता र पासवर्डले लगइन गर्नुहोस्',
     signupSubtitle: 'खाता AI मा आफ्नो नयाँ व्यवसाय दर्ता गर्नुहोस्',
-    phone: 'फोन नम्बर / जिमेल (Gmail) खाता',
+    gmailLabel: 'जिमेल (Gmail) खाता',
+    gmailPlaceholder: 'जस्तै: name@gmail.com',
+    phoneLabel: 'फोन नम्बर',
+    phonePlaceholderSignup: 'जस्तै: ९८४१२३४५६७',
+    emailLabel: 'जिमेल (Gmail) खाता',
+    emailPlaceholderSignup: 'जस्तै: name@gmail.com',
+    phone: 'फोन नम्बर वा जिमेल खाता',
     phonePlaceholder: 'जस्तै: ९८४१२३४५६७ वा name@gmail.com',
     password: 'पासवर्ड',
     userName: 'प्रयोगकर्ताको नाम',
@@ -133,9 +229,11 @@ const I18N = {
     passwordResetSuccess: 'पासवर्ड सफलतापूर्वक परिवर्तन भयो! अब नयाँ पासवर्डले लगइन गर्नुहोस्।',
     passwordsDoNotMatch: 'दुवै पासवर्ड मिलेन। कृपया फेरि जाँच्नुहोस्।',
     fillResetFields: 'कृपया प्रमाणीकरण कोड र नयाँ पासवर्ड प्रविष्ट गर्नुहोस्।',
-    fillPhoneOrEmail: 'कृपया आफ्नो फोन नम्बर वा जिमेल खाता प्रविष्ट गर्नुहोस्।',
+    fillPhoneOrEmail: 'कृपया आफ्नो जिमेल खाता प्रविष्ट गर्नुहोस्।',
+    fillSignupFields: 'कृपया सबै आवश्यक फिल्ड भर्नुहोस् (नाम, व्यवसाय, फोन, जिमेल, पासवर्ड)।',
     langPrompt: '३ भाषामा उपलब्ध छ:',
     secureNote: 'सुरक्षित सत्र · SQLite र Excel सँग प्रत्यक्ष सिङ्क',
+    signupSuccess: 'खाता सफलतापूर्वक बनाइयो! अब आफ्नो जिमेल र पासवर्डले लगइन गर्नुहोस्।',
     todaysSales: 'आजको बिक्री',
     monthlyRevenue: 'मासिक आम्दानी',
     totalExpenses: 'कुल खर्च',
@@ -158,16 +256,92 @@ const I18N = {
     excelSheets: 'एक्सेल पानाहरू',
     dataDriven: 'तथ्यांक-आधारित',
     viewAll: 'सबै हेर्नुहोस्',
-    inventory: 'सामान स्टक'
+    inventory: 'सामान स्टक',
+    salesRecordedToday: 'आज दर्ता भएका बिक्री',
+    netSalesMonth: 'यो महिनाको कुल बिक्री',
+    operatingExpenses: 'सञ्चालन खर्च',
+    revMinusCost: 'आम्दानी - लागत - खर्च',
+    outstandingCustomer: 'ग्राहकबाट बाँकी भुक्तानी',
+    outstandingSupplier: 'आपूर्तिकर्तालाई बाँकी भुक्तानी',
+    yourFirstSale: 'यहाँबाट आफ्नो पहिलो बिक्री सुरु गर्नुहोस्',
+    invoicesAppear: 'दर्ता गरिएका बिल र ग्राहक भुक्तानीहरू यहाँ देखिनेछन्।',
+    stockView: 'स्टकको स्पष्ट विवरण',
+    addProductsTrack: 'सामान थप्नुहोस् र स्टक स्तर जान्नुहोस्।',
+    totalProducts: 'कुल उत्पादनहरू',
+    lowStockItems: 'कम स्टक सामानहरू',
+    unitsInStock: 'स्टकमा एकाइहरू',
+    stockValue: 'स्टकको मूल्य',
+    startWorkspace: 'पहिलो कारोबार दर्ता गर्न आफ्नो कार्यक्षेत्र सुरु गर्नुहोस्।',
+    recordTransaction: 'कारोबार दर्ता गर्नुहोस्',
+    goodDecisions: 'राम्रो निर्णय राम्रो तथ्यांकबाट हुन्छ',
+    insightsAppear: 'बिक्री, सामान र भुक्तानी थप्दै जाँदा यहाँ विश्लेषण देखिनेछ।',
+    addFirstProduct: 'पहिलो सामान थप्नुहोस्',
+    yourPerformance: 'समयसँगै तपाईंको प्रदर्शन',
+    thisMonth: 'यो महिना',
+    last7Days: 'अन्तिम ७ दिन',
+    noTransactions: 'यस अवधिमा कुनै कारोबार छैन। कारोबार दर्ता गर्दा चार्ट अपडेट हुनेछ।',
+    revenue: 'आम्दानी',
+    expenses: 'खर्च',
+    liveExcelSync: 'लाइभ इन-एप एक्सेल सिङ्क्रोनाइजेसन',
+    excelSyncDesc: 'प्रत्येक बिल अपलोड, बिक्री, खरिद अर्डर, भुक्तानी र खर्च आफ्नै एक्सेल पानामा स्वचालित रूपमा सुरक्षित हुन्छ।',
+    openSalesSheet: 'बिक्री पाना खोल्नुहोस्',
+    openInvoicesSheet: 'बिल पाना खोल्नुहोस्',
+    paid: 'भुक्तानी भयो',
+    walkIn: 'सिधा ग्राहक',
+    secureConnected: 'तपाईंको व्यवसाय, सुरक्षित रूपमा जोडिएको',
+    deleteConfirm: 'के तपाईं यो रेकर्ड मेटाउन निश्चित हुनुहुन्छ?',
+    recordDeleted: 'रेकर्ड सफलतापूर्वक मेटाइयो ✓',
+    processing: 'प्रक्रिया हुँदैछ…',
+    syncing: 'व्यापार डेटा सिङ्क हुँदैछ…',
+    brandSubtitle: 'स्मार्ट व्यापार सफ्टवेयर',
+    navWorkspace: 'कार्यक्षेत्र',
+    navOverview: 'सारांश',
+    navSalesInvoices: 'बिक्री र बिलहरू',
+    navInventory: 'मौज्दात (स्टक)',
+    navFinance: 'वित्त र लेखा',
+    navExcelSheets: 'एक्सेल पानाहरू',
+    navBusinessMgmt: 'व्यवसाय व्यवस्थापन',
+    navPurchaseOrders: 'खरिद अर्डरहरू',
+    navSuppliers: 'आपूर्तिकर्ताहरू',
+    navCustomers: 'ग्राहकहरू',
+    navInvoices: 'बिलहरू',
+    navReports: 'प्रतिवेदनहरू',
+    navSettingsHelp: 'सेटिङ र सहायता',
+    navSettings: 'सेटिङहरू',
+    navNotifications: 'सूचनाहरू',
+    liveBadge: 'लाइभ',
+    sidebarVersion: 'खाता AI · संस्करण १.०',
+    owner: 'सञ्चालक',
+    currencyCode: 'ने.रु.',
+    secureWorkspace: 'सुरक्षित कार्यक्षेत्र',
+    connected: 'जोडिएको',
+    notificationsTitle: 'सूचनाहरू',
+    refreshTitle: 'डेटा रिफ्रेस गर्नुहोस्',
+    openExcelTitle: 'एक्सेल पाना खोल्नुहोस्',
+    colInvoice: 'बिल नं.',
+    colCustomer: 'ग्राहक',
+    colProduct: 'सामान',
+    colAmount: 'रकम',
+    colStatus: 'स्थिति',
+    userNamePlaceholder: 'जस्तै: रमेश शर्मा',
+    businessNamePlaceholder: 'जस्तै: शर्मा किराना तथा ट्रेडर्स',
+    addressPlaceholder: 'जस्तै: न्युरोड, काठमाडौं',
+    emailCodeSentTitle: 'तपाईंको जिमेलमा प्रमाणीकरण कोड पठाइएको छ'
   },
   hi: {
     welcome: 'खाता AI में आपका स्वागत है',
     tagline: 'आइए आज के दिन को व्यापारिक दृष्टि से सफल बनाएं।',
     loginTab: 'लॉग इन करें',
     signupTab: 'साइन अप (नया खाता)',
-    loginSubtitle: 'अपने फ़ोन नंबर / जीमेल खाते और पासवर्ड से लॉग इन करें',
+    loginSubtitle: 'अपने जीमेल खाते और पासवर्ड से लॉग इन करें',
     signupSubtitle: 'खाता AI पर अपने नए व्यवसाय का पंजीकरण करें',
-    phone: 'फ़ोन नंबर / जीमेल (Gmail) खाता',
+    gmailLabel: 'जीमेल (Gmail) खाता',
+    gmailPlaceholder: 'जैसे: name@gmail.com',
+    phoneLabel: 'फ़ोन नंबर',
+    phonePlaceholderSignup: 'जैसे: 9841234567',
+    emailLabel: 'जीमेल (Gmail) खाता',
+    emailPlaceholderSignup: 'जैसे: name@gmail.com',
+    phone: 'फ़ोन नंबर या जीमेल खाता',
     phonePlaceholder: 'जैसे: 9841234567 या name@gmail.com',
     password: 'पासवर्ड',
     userName: 'उपयोगकर्ता का नाम',
@@ -193,9 +367,11 @@ const I18N = {
     passwordResetSuccess: 'पासवर्ड सफलतापूर्वक रीसेट हो गया! अब नए पासवर्ड से लॉग इन करें।',
     passwordsDoNotMatch: 'पासवर्ड मेल नहीं खाते। कृपया पुनः प्रयास करें।',
     fillResetFields: 'कृपया सत्यापन कोड और नया पासवर्ड दर्ज करें।',
-    fillPhoneOrEmail: 'कृपया अपना फ़ोन नंबर या जीमेल खाता दर्ज करें।',
+    fillPhoneOrEmail: 'कृपया अपना जीमेल खाता दर्ज करें।',
+    fillSignupFields: 'कृपया सभी आवश्यक फ़ील्ड भरें (नाम, व्यवसाय, फ़ोन, जीमेल, पासवर्ड)।',
     langPrompt: '३ भाषाओं में उपलब्ध:',
     secureNote: 'सुरक्षित सत्र · SQLite और Excel के साथ लाइव सिंक',
+    signupSuccess: 'खाता बन गया! अब अपने जीमेल और पासवर्ड से लॉग इन करें।',
     todaysSales: 'आज की बिक्री',
     monthlyRevenue: 'मासिक राजस्व',
     totalExpenses: 'कुल खर्च',
@@ -218,10 +394,79 @@ const I18N = {
     excelSheets: 'एक्सेल शीट्स',
     dataDriven: 'डेटा-संचालित',
     viewAll: 'सभी देखें',
-    inventory: 'इन्वेंट्री'
+    inventory: 'इन्वेंट्री',
+    salesRecordedToday: 'आज दर्ज की गई बिक्री',
+    netSalesMonth: 'इस महीने की कुल बिक्री',
+    operatingExpenses: 'परिचालन खर्च',
+    revMinusCost: 'राजस्व - लागत - खर्च',
+    outstandingCustomer: 'ग्राहकों से बकाया भुगतान',
+    outstandingSupplier: 'आपूर्तिकर्ताओं को बकाया भुगतान',
+    yourFirstSale: 'यहाँ से अपनी पहली बिक्री शुरू करें',
+    invoicesAppear: 'दर्ज किए गए बिल और ग्राहक भुगतान यहाँ दिखेंगे।',
+    stockView: 'अपने स्टॉक का स्पष्ट विवरण',
+    addProductsTrack: 'उत्पाद जोड़ें और स्टॉक स्तर जानें।',
+    totalProducts: 'कुल उत्पाद',
+    lowStockItems: 'कम स्टॉक आइटम',
+    unitsInStock: 'स्टॉक में इकाइयाँ',
+    stockValue: 'स्टॉक मूल्य',
+    startWorkspace: 'पहला लेनदेन दर्ज करने के लिए अपना कार्यक्षेत्र शुरू करें।',
+    recordTransaction: 'लेनदेन दर्ज करें',
+    goodDecisions: 'अच्छे निर्णय अच्छे डेटा से आते हैं',
+    insightsAppear: 'बिक्री, उत्पाद और भुगतान जोड़ने पर यहाँ विश्लेषण दिखेगा।',
+    addFirstProduct: 'पहला उत्पाद जोड़ें',
+    yourPerformance: 'समय के साथ आपका प्रदर्शन',
+    thisMonth: 'इस महीने',
+    last7Days: 'पिछले ७ दिन',
+    noTransactions: 'इस अवधि में कोई लेनदेन नहीं। लेनदेन दर्ज करने पर चार्ट अपडेट होगा।',
+    revenue: 'राजस्व',
+    expenses: 'खर्च',
+    liveExcelSync: 'लाइव इन-ऐप एक्सेल सिंक्रोनाइज़ेशन',
+    excelSyncDesc: 'प्रत्येक बिल अपलोड, बिक्री, खरीद आदेश, भुगतान और खर्च अपनी अलग एक्सेल शीट में स्वचालित रूप से सहेजा जाता है।',
+    openSalesSheet: 'बिक्री शीट खोलें',
+    openInvoicesSheet: 'बिल शीट खोलें',
+    paid: 'भुगतान हुआ',
+    walkIn: 'सीधे ग्राहक',
+    secureConnected: 'आपका व्यवसाय, सुरक्षित रूप से जुड़ा हुआ',
+    deleteConfirm: 'क्या आप इस रिकॉर्ड को हटाना चाहते हैं?',
+    recordDeleted: 'रिकॉर्ड सफलतापूर्वक हटाया गया ✓',
+    processing: 'प्रक्रिया हो रही है…',
+    syncing: 'व्यापार डेटा सिंक हो रहा है…',
+    brandSubtitle: 'स्मार्ट बिजनेस सॉफ्टवेयर',
+    navWorkspace: 'कार्यक्षेत्र',
+    navOverview: 'अवलोकन',
+    navSalesInvoices: 'बिक्री और बिल',
+    navInventory: 'इन्वेंट्री (स्टॉक)',
+    navFinance: 'वित्त और खाता',
+    navExcelSheets: 'एक्सेल शीट्स',
+    navBusinessMgmt: 'व्यवसाय प्रबंधन',
+    navPurchaseOrders: 'खरीद आदेश',
+    navSuppliers: 'आपूर्तिकर्ता',
+    navCustomers: 'ग्राहक',
+    navInvoices: 'बिल',
+    navReports: 'रिपोर्ट',
+    navSettingsHelp: 'सेटिंग्स और सहायता',
+    navSettings: 'सेटिंग्स',
+    navNotifications: 'सूचनाएं',
+    liveBadge: 'लाइव',
+    sidebarVersion: 'खाता AI · संस्करण १.०',
+    owner: 'स्वामी',
+    currencyCode: 'रु.',
+    secureWorkspace: 'सुरक्षित कार्यक्षेत्र',
+    connected: 'जुड़ा हुआ',
+    notificationsTitle: 'सूचनाएं',
+    refreshTitle: 'डेटा रीफ़्रेश करें',
+    openExcelTitle: 'एक्सेल शीट खोलें',
+    colInvoice: 'बिल नं.',
+    colCustomer: 'ग्राहक',
+    colProduct: 'उत्पाद',
+    colAmount: 'राशि',
+    colStatus: 'स्थिति',
+    userNamePlaceholder: 'जैसे: रमेश शर्मा',
+    businessNamePlaceholder: 'जैसे: शर्मा किराना एवं ट्रेडर्स',
+    addressPlaceholder: 'जैसे: न्यू रोड, काठमांडू',
+    emailCodeSentTitle: 'आपके ईमेल पर सत्यापन कोड भेजा गया है'
   }
 };
-
 function Field({ label, value, onChange, type = 'text', placeholder = '', required = false, icon: Icon, rightElement = null }) {
   return (
     <label className="field">
@@ -249,14 +494,15 @@ function Field({ label, value, onChange, type = 'text', placeholder = '', requir
 function LoginPage({ onLoginSuccess, lang, setLang }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'forgot'
   const [resetStep, setResetStep] = useState(1); // 1: send code, 2: reset password
-  const [generatedCode, setGeneratedCode] = useState('');   // only set if code shown on screen
-  const [codeDelivery, setCodeDelivery] = useState(null);   // { isEmail, emailSent, maskedDest }
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [codeDelivery, setCodeDelivery] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [form, setForm] = useState({
     userName: '',
     businessName: '',
     address: '',
-    phone: '',
+    phone: '',       // signup: phone number separately
+    email: '',       // signup: gmail separately; login: gmail
     password: '',
     resetCode: '',
     newPassword: '',
@@ -274,40 +520,59 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
     setSuccessMsg('');
 
     if (mode === 'signup') {
-      if (!form.userName.trim() || !form.businessName.trim() || !form.phone.trim() || !form.password.trim()) {
-        setError('Please fill in User name, Business name, Phone number / Gmail, and Password.');
+      if (!form.userName.trim() || !form.businessName.trim() || !form.phone.trim() || !form.email.trim() || !form.password.trim()) {
+        setError(t.fillSignupFields);
         return;
       }
     } else {
-      if (!form.phone.trim() || !form.password.trim()) {
-        setError(t.fillPhoneOrEmail || 'Please enter your Phone number / Gmail and Password.');
+      // login: only gmail + password
+      if (!form.email.trim() || !form.password.trim()) {
+        setError(t.fillPhoneOrEmail);
         return;
       }
     }
 
     setLoading(true);
     try {
-      const endpoint = mode === 'signup' ? '/auth/khata-signup' : '/auth/khata-login';
-      const body = mode === 'signup'
-        ? form
-        : { phone: form.phone, password: form.password };
+      if (mode === 'signup') {
+        // SIGNUP: create account, then redirect to login (do NOT auto-login)
+        const res = await fetch(API + '/auth/khata-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userName: form.userName,
+            businessName: form.businessName,
+            address: form.address,
+            phone: form.phone,
+            email: form.email,
+            password: form.password
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Sign up failed');
 
-      const res = await fetch(API + endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Authentication failed');
+        // Redirect to login with success message
+        setMode('login');
+        setForm(f => ({ ...f, email: form.email, password: '', phone: '', userName: '', businessName: '', address: '' }));
+        setSuccessMsg(t.signupSuccess);
+      } else {
+        // LOGIN: use gmail + password
+        const res = await fetch(API + '/auth/khata-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email, password: form.password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Authentication failed');
 
-      localStorage.setItem('bo_token', data.token);
-      localStorage.setItem('bo_user', JSON.stringify({
-        ...data.user,
-        businessName: data.business?.name || form.businessName,
-        address: data.business?.address || form.address
-      }));
-
-      onLoginSuccess(data.user, data.business);
+        localStorage.setItem('bo_token', data.token);
+        localStorage.setItem('bo_user', JSON.stringify({
+          ...data.user,
+          businessName: data.business?.name || '',
+          address: data.business?.address || ''
+        }));
+        onLoginSuccess(data.user, data.business);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -333,22 +598,14 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to generate reset code');
 
-      // Track whether code was emailed or shown on screen
-      setCodeDelivery({
-        isEmail: data.isEmail,
-        emailSent: data.emailSent,
-      });
-
+      setCodeDelivery({ isEmail: data.isEmail, emailSent: data.emailSent });
       if (data.code) {
-        // Code shown on screen (phone user, or SMTP not configured)
         setGeneratedCode(data.code);
         setForm(f => ({ ...f, resetCode: data.code }));
       } else {
-        // Email was sent — clear any old code
         setGeneratedCode('');
         setForm(f => ({ ...f, resetCode: '' }));
       }
-
       setSuccessMsg(data.message);
       setResetStep(2);
     } catch (err) {
@@ -398,7 +655,7 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
   return (
     <div className="login-screen-wrapper">
       <div className="login-card-container">
-        {/* Language Selection Header */}
+        {/* Language Selection Header — only shown on login page */}
         <div className="lang-selector-header">
           <div className="lang-prompt-wrap">
             <Globe size={14} />
@@ -489,9 +746,7 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
 
             {resetStep === 2 && (
               <>
-                {/* Show different panel depending on delivery method */}
                 {codeDelivery?.isEmail && codeDelivery?.emailSent ? (
-                  /* ── Email was sent ── */
                   <div className="reset-code-box" style={{ background: '#eff6ff', border: '1.5px solid #93c5fd', color: '#1e40af' }}>
                     <Mail size={22} style={{ flexShrink: 0 }} />
                     <div>
@@ -503,7 +758,6 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
                     </div>
                   </div>
                 ) : generatedCode ? (
-                  /* ── Code shown on screen (phone user or SMTP not configured) ── */
                   <div className="reset-code-box">
                     <CheckCircle2 size={20} style={{ flexShrink: 0 }} />
                     <div>
@@ -565,7 +819,7 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
               {loading ? (
                 <>
                   <RefreshCw size={16} className="spin" />
-                  <span>Processing…</span>
+                  <span>{t.processing}</span>
                 </>
               ) : (
                 <>
@@ -598,7 +852,7 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
                   icon={User}
                   value={form.userName}
                   onChange={fset('userName')}
-                  placeholder="e.g. Ramesh Sharma"
+                  placeholder={t.userNamePlaceholder}
                   required
                 />
 
@@ -607,7 +861,7 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
                   icon={Briefcase}
                   value={form.businessName}
                   onChange={fset('businessName')}
-                  placeholder="e.g. Sharma Grocery & Traders"
+                  placeholder={t.businessNamePlaceholder}
                   required
                 />
 
@@ -616,20 +870,45 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
                   icon={MapPin}
                   value={form.address}
                   onChange={fset('address')}
-                  placeholder="e.g. New Road, Kathmandu"
+                  placeholder={t.addressPlaceholder}
+                />
+
+                {/* Phone number — signup only, separate field */}
+                <Field
+                  label={t.phoneLabel}
+                  icon={Phone}
+                  value={form.phone}
+                  onChange={fset('phone')}
+                  type="tel"
+                  placeholder={t.phonePlaceholderSignup}
+                  required
+                />
+
+                {/* Gmail — signup only, separate field */}
+                <Field
+                  label={t.emailLabel}
+                  icon={Mail}
+                  value={form.email}
+                  onChange={fset('email')}
+                  type="email"
+                  placeholder={t.emailPlaceholderSignup}
+                  required
                 />
               </>
             )}
 
-            <Field
-              label={t.phone}
-              icon={Phone}
-              value={form.phone}
-              onChange={fset('phone')}
-              type="text"
-              placeholder={t.phonePlaceholder}
-              required
-            />
+            {/* Login: Gmail field only */}
+            {mode === 'login' && (
+              <Field
+                label={t.gmailLabel}
+                icon={Mail}
+                value={form.email}
+                onChange={fset('email')}
+                type="email"
+                placeholder={t.gmailPlaceholder}
+                required
+              />
+            )}
 
             <Field
               label={t.password}
@@ -663,7 +942,7 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
               {loading ? (
                 <>
                   <RefreshCw size={16} className="spin" />
-                  <span>Processing…</span>
+                  <span>{t.processing}</span>
                 </>
               ) : (
                 <>
@@ -697,7 +976,6 @@ function LoginPage({ onLoginSuccess, lang, setLang }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // MAIN APP COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 function App() {
@@ -796,30 +1074,30 @@ function App() {
 
   const nav = [
     {
-      label: 'WORKSPACE',
+      label: t.navWorkspace,
       items: [
-        ['Overview', LayoutDashboard],
-        ['Sales & Invoices', ShoppingCart],
-        ['Inventory', Package],
-        ['Finance', Wallet],
-        ['Excel Sheets', FileSpreadsheet]
+        ['Overview', t.navOverview, LayoutDashboard],
+        ['Sales & Invoices', t.navSalesInvoices, ShoppingCart],
+        ['Inventory', t.navInventory, Package],
+        ['Finance', t.navFinance, Wallet],
+        ['Excel Sheets', t.navExcelSheets, FileSpreadsheet]
       ]
     },
     {
-      label: 'BUSINESS MANAGEMENT',
+      label: t.navBusinessMgmt,
       items: [
-        ['Purchase Orders', ClipboardList],
-        ['Suppliers', Truck],
-        ['Customers', Users],
-        ['Invoices', FileText],
-        ['Reports', ChartNoAxesCombined]
+        ['Purchase Orders', t.navPurchaseOrders, ClipboardList],
+        ['Suppliers', t.navSuppliers, Truck],
+        ['Customers', t.navCustomers, Users],
+        ['Invoices', t.navInvoices, FileText],
+        ['Reports', t.navReports, ChartNoAxesCombined]
       ]
     },
     {
-      label: 'SETTINGS & HELP',
+      label: t.navSettingsHelp,
       items: [
-        ['Settings', Settings],
-        ['Notifications', Bell]
+        ['Settings', t.navSettings, Settings],
+        ['Notifications', t.navNotifications, Bell]
       ]
     }
   ];
@@ -1003,21 +1281,26 @@ function App() {
   ]);
 
   const del = async (endpoint, id, cb) => {
-    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    if (!window.confirm(t.deleteConfirm || 'Are you sure you want to delete this record?')) return;
     try {
       await request('/' + endpoint + '/' + id, { method: 'DELETE' });
       cb();
-      notify('Record deleted successfully ✓');
+      notify(t.recordDeleted || 'Record deleted successfully ✓');
     } catch (e) {
       notify(e.message, false);
     }
   };
 
-  const todayStr = new Date().toLocaleDateString(lang === 'ne' ? 'ne-NP' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
+  const money = (n) => formatMoney(n, lang);
+
+  const todayStr = new Date().toLocaleDateString(
+    lang === 'ne' ? 'ne-NP' : lang === 'hi' ? 'hi-IN' : 'en-US',
+    {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }
+  );
 
   return (
     <div className="app-container">
@@ -1027,7 +1310,7 @@ function App() {
           <span className="brand-icon"><Sparkles size={18} /></span>
           <div>
             <b>Khata <em>AI</em></b>
-            <small>INTELLIGENT BUSINESS SAAS</small>
+            <small>{t.brandSubtitle}</small>
           </div>
           <button className="close-mobile" onClick={() => setMobile(false)}><X size={18} /></button>
         </div>
@@ -1036,19 +1319,19 @@ function App() {
           {nav.map(group => (
             <div className="nav-group" key={group.label}>
               <label className="nav-group-label">{group.label}</label>
-              {group.items.map(([name, Icon]) => (
+              {group.items.map(([name, displayName, Icon]) => (
                 <button
                   key={name}
                   className={'nav-item blue-nav-item ' + (page === name ? 'active' : '')}
                   onClick={() => { setPage(name); setMobile(false); }}
                 >
                   <Icon size={16} />
-                  <span>{name}</span>
+                  <span>{displayName}</span>
                   {name === 'Notifications' && notifications.filter(n => !n.read).length > 0 && (
-                    <i className="nav-count">{notifications.filter(n => !n.read).length}</i>
+                    <i className="nav-count">{formatNumber(notifications.filter(n => !n.read).length, lang)}</i>
                   )}
                   {name === 'Excel Sheets' && (
-                    <span className="excel-tag">LIVE</span>
+                    <span className="excel-tag">{t.liveBadge}</span>
                   )}
                 </button>
               ))}
@@ -1057,8 +1340,8 @@ function App() {
         </div>
 
         <div className="sidebar-bottom blue-sidebar-bottom">
-          <div className="secure"><ShieldCheck size={14} /> Your business, securely connected</div>
-          <small>KHATA AI · PRODUCTION V1.0</small>
+          <div className="secure"><ShieldCheck size={14} /> {t.secureConnected}</div>
+          <small>{t.sidebarVersion}</small>
         </div>
       </aside>
 
@@ -1070,44 +1353,37 @@ function App() {
             <button className="mobile-menu" onClick={() => setMobile(true)}><Menu size={20} /></button>
             <div className="biz-avatar"><Building2 size={18} /></div>
             <div>
-              <b className="biz-title">{settings?.name || currentUser?.businessName || 'Khata AI Workspace'}</b>
+              <b className="biz-title">{settings?.name || currentUser?.businessName || 'Khata AI'}</b>
               <small className="biz-meta">
-                <i className="status-dot" /> {currentUser?.name || 'Owner'} · {settings?.currency || 'NPR'} · Secure Workspace
+                <i className="status-dot" /> {currentUser?.name || t.owner} · {(settings?.currency === 'NPR' || !settings?.currency) ? t.currencyCode : settings.currency} · {t.secureWorkspace}
               </small>
             </div>
           </div>
 
           <div className="top-right">
-            {/* Language Switcher in Top Bar */}
-            <div className="topbar-lang-toggle">
-              <button className={lang === 'en' ? 'active' : ''} onClick={() => handleSetLang('en')}>EN</button>
-              <button className={lang === 'ne' ? 'active' : ''} onClick={() => handleSetLang('ne')}>नेपाली</button>
-              <button className={lang === 'hi' ? 'active' : ''} onClick={() => handleSetLang('hi')}>हिन्दी</button>
-            </div>
-
             <button
               className="excel-top-btn"
               onClick={() => { setPage('Excel Sheets'); setExcelModal('sales'); }}
-              title="Open In-App Spreadsheets"
+              title={t.openExcelTitle}
             >
               <FileSpreadsheet size={15} />
               <span>{t.excelSheets}</span>
             </button>
 
             <span className="connected-badge">
-              <i className="status-dot" /> Connected
+              <i className="status-dot" /> {t.connected}
             </span>
 
-            <button className="icon-action" onClick={() => setPage('Notifications')} title="Notifications">
+            <button className="icon-action" onClick={() => setPage('Notifications')} title={t.notificationsTitle}>
               <Bell size={18} />
               {notifications.filter(n => !n.read).length > 0 && <i className="red-dot" />}
             </button>
 
-            <button className="icon-action" onClick={load} title="Refresh workspace">
+            <button className="icon-action" onClick={load} title={t.refreshTitle}>
               <RefreshCw size={17} />
             </button>
 
-            <button className="signout-btn" onClick={handleLogout} title="Sign Out">
+            <button className="signout-btn" onClick={handleLogout} title={t.signOut}>
               <LogOut size={15} />
               <span>{t.signOut}</span>
             </button>
@@ -1118,7 +1394,7 @@ function App() {
         <main className="content-area">
           {loading && (
             <div className="loading-banner">
-              <RefreshCw size={14} className="spin" /> Syncing business data…
+              <RefreshCw size={14} className="spin" /> {t.syncing}
             </div>
           )}
 
@@ -1133,6 +1409,7 @@ function App() {
               period={chartPeriod}
               setPeriod={setChartPeriod}
               money={money}
+              lang={lang}
               t={t}
               onQuickAction={(action) => {
                 if (action === 'invoice') { setForm({}); setModal('InvoiceUpload'); }
@@ -1475,7 +1752,7 @@ function App() {
 // 1. LANDING DASHBOARD COMPONENT (Khata AI)
 // ─────────────────────────────────────────────────────────────────────────────
 function LandingDashboard({
-  d, sales, products, settings, userName, todayStr, period, setPeriod, money, t,
+  d, sales, products, settings, userName, todayStr, period, setPeriod, money, lang, t,
   onQuickAction, onViewAllSales, onViewInventory, onOpenExcel
 }) {
   const defaultSalesChart = [
@@ -1511,10 +1788,10 @@ function LandingDashboard({
       <section className="getting-started-banner">
         <div className="banner-message">
           <HelpCircle size={18} className="info-icon" />
-          <span>Start your own workspace to record your first transaction.</span>
+          <span>{t.startWorkspace}</span>
         </div>
         <button className="create-business-btn" onClick={() => onQuickAction('sale')}>
-          <span>Record a transaction</span>
+          <span>{t.recordTransaction}</span>
           <ArrowUpRight size={16} />
         </button>
       </section>
@@ -1532,7 +1809,7 @@ function LandingDashboard({
           <div className="metric-value">{money(d?.today)}</div>
           <div className="metric-footer">
             <CheckCircle2 size={13} className="text-teal" />
-            <span>Sales recorded today</span>
+            <span>{t.salesRecordedToday}</span>
           </div>
         </div>
 
@@ -1547,7 +1824,7 @@ function LandingDashboard({
           <div className="metric-value">{money(d?.month)}</div>
           <div className="metric-footer">
             <CheckCircle2 size={13} className="text-teal" />
-            <span>Net sales this month</span>
+            <span>{t.netSalesMonth}</span>
           </div>
         </div>
 
@@ -1562,7 +1839,7 @@ function LandingDashboard({
           <div className="metric-value">{money(d?.expenses)}</div>
           <div className="metric-footer">
             <CheckCircle2 size={13} className="text-teal" />
-            <span>Operating expenses</span>
+            <span>{t.operatingExpenses}</span>
           </div>
         </div>
 
@@ -1577,7 +1854,7 @@ function LandingDashboard({
           <div className="metric-value">{money(d?.netProfit)}</div>
           <div className="metric-footer">
             <CheckCircle2 size={13} className="text-teal" />
-            <span>Revenue - cost - expenses</span>
+            <span>{t.revMinusCost}</span>
           </div>
         </div>
 
@@ -1592,7 +1869,7 @@ function LandingDashboard({
           <div className="metric-value">{money(d?.receivables || 0)}</div>
           <div className="metric-footer">
             <CheckCircle2 size={13} className="text-teal" />
-            <span>Outstanding customer payments</span>
+            <span>{t.outstandingCustomer}</span>
           </div>
         </div>
 
@@ -1607,7 +1884,7 @@ function LandingDashboard({
           <div className="metric-value">{money(d?.payables || 0)}</div>
           <div className="metric-footer">
             <CheckCircle2 size={13} className="text-teal" />
-            <span>Outstanding supplier payments</span>
+            <span>{t.outstandingSupplier}</span>
           </div>
         </div>
       </section>
@@ -1671,21 +1948,21 @@ function LandingDashboard({
           <div className="chart-header">
             <div>
               <h3>{t.revExpenses}</h3>
-              <p>Your performance over time</p>
+              <p>{t.yourPerformance}</p>
             </div>
             <select
               className="period-dropdown"
               value={period}
               onChange={e => setPeriod(e.target.value)}
             >
-              <option value="This month">This month</option>
-              <option value="Last 7 days">Last 7 days</option>
+              <option value="This month">{t.thisMonth}</option>
+              <option value="Last 7 days">{t.last7Days}</option>
             </select>
           </div>
 
           <div className="chart-legend">
-            <span className="legend-item"><i className="dot dot-teal" /> Revenue</span>
-            <span className="legend-item"><i className="dot dot-violet" /> Expenses</span>
+            <span className="legend-item"><i className="dot dot-teal" /> {t.revenue}</span>
+            <span className="legend-item"><i className="dot dot-violet" /> {t.expenses}</span>
           </div>
 
           <div className="chart-canvas-wrapper">
@@ -1693,7 +1970,7 @@ function LandingDashboard({
               <LineChart data={chartData} margin={{ top: 15, right: 15, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => formatNumber(v, lang)} />
                 <Tooltip
                   formatter={(val) => [money(val), '']}
                   contentStyle={{ background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -1705,7 +1982,7 @@ function LandingDashboard({
           </div>
 
           <div className="chart-bottom-note">
-            <span>No transactions in this period. Your chart will update as you record them.</span>
+            <span>{t.noTransactions}</span>
           </div>
         </div>
 
@@ -1727,11 +2004,11 @@ function LandingDashboard({
               </div>
             </div>
 
-            <h4>Good decisions start with good data</h4>
-            <p>Insights will appear as you add sales, products, and payments.</p>
+            <h4>{t.goodDecisions}</h4>
+            <p>{t.insightsAppear}</p>
 
             <button className="add-first-product-link" onClick={() => onQuickAction('product')}>
-              <span>Add your first product</span>
+              <span>{t.addFirstProduct}</span>
               <ArrowUpRight size={15} />
             </button>
           </div>
@@ -1755,22 +2032,22 @@ function LandingDashboard({
               <table className="clean-table">
                 <thead>
                   <tr>
-                    <th>Invoice</th>
-                    <th>Customer</th>
-                    <th>Product</th>
-                    <th style={{ textAlign: 'right' }}>Amount</th>
-                    <th>Status</th>
+                    <th>{t.colInvoice}</th>
+                    <th>{t.colCustomer}</th>
+                    <th>{t.colProduct}</th>
+                    <th style={{ textAlign: 'right' }}>{t.colAmount}</th>
+                    <th>{t.colStatus}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {d.recent.map(s => (
                     <tr key={s.id}>
                       <td className="font-mono">{s.invoice_no}</td>
-                      <td>{s.customer_name || 'Walk-in'}</td>
+                      <td>{s.customer_name || t.walkIn}</td>
                       <td>{s.product_name}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600 }}>{money(s.total)}</td>
                       <td>
-                        <span className="status-badge paid">Paid</span>
+                        <span className="status-badge paid">{t.paid}</span>
                       </td>
                     </tr>
                   ))}
@@ -1782,8 +2059,8 @@ function LandingDashboard({
               <div className="empty-icon-circle">
                 <ShoppingCart size={22} />
               </div>
-              <h4>Your first sale starts here</h4>
-              <p>Recorded invoices and customer payments will appear here.</p>
+              <h4>{t.yourFirstSale}</h4>
+              <p>{t.invoicesAppear}</p>
             </div>
           )}
         </div>
@@ -1801,19 +2078,19 @@ function LandingDashboard({
           {products && products.length > 0 ? (
             <div className="stock-stats-grid">
               <div className="stock-stat-box">
-                <span className="stat-label">Total Products</span>
-                <b className="stat-num">{products.length}</b>
+                <span className="stat-label">{t.totalProducts}</span>
+                <b className="stat-num">{formatNumber(products.length, lang)}</b>
               </div>
               <div className="stock-stat-box">
-                <span className="stat-label">Low Stock Items</span>
-                <b className="stat-num text-amber">{products.filter(p => p.stock <= p.min_stock).length}</b>
+                <span className="stat-label">{t.lowStockItems}</span>
+                <b className="stat-num text-amber">{formatNumber(products.filter(p => p.stock <= p.min_stock).length, lang)}</b>
               </div>
               <div className="stock-stat-box">
-                <span className="stat-label">Units in Stock</span>
-                <b className="stat-num">{products.reduce((acc, p) => acc + (p.stock || 0), 0)}</b>
+                <span className="stat-label">{t.unitsInStock}</span>
+                <b className="stat-num">{formatNumber(products.reduce((acc, p) => acc + (p.stock || 0), 0), lang)}</b>
               </div>
               <div className="stock-stat-box">
-                <span className="stat-label">Stock Value</span>
+                <span className="stat-label">{t.stockValue}</span>
                 <b className="stat-num text-teal">{money(products.reduce((acc, p) => acc + (p.stock * p.purchase_price || 0), 0))}</b>
               </div>
             </div>
@@ -1822,8 +2099,8 @@ function LandingDashboard({
               <div className="empty-icon-circle">
                 <Package size={22} />
               </div>
-              <h4>A clear view of your stock</h4>
-              <p>Add products to track stock levels and know when to restock.</p>
+              <h4>{t.stockView}</h4>
+              <p>{t.addProductsTrack}</p>
             </div>
           )}
         </div>
@@ -1836,18 +2113,18 @@ function LandingDashboard({
             <FileSpreadsheet size={28} />
           </div>
           <div>
-            <h3>Live In-App Excel Synchronization</h3>
-            <p>Every invoice upload, sale, purchase order, payment, and expense is automatically saved to its own separate Excel sheet and viewable inside this web app.</p>
+            <h3>{t.liveExcelSync}</h3>
+            <p>{t.excelSyncDesc}</p>
           </div>
         </div>
         <div className="excel-callout-right">
           <button className="open-sheet-btn" onClick={() => onOpenExcel('sales')}>
             <FileSpreadsheet size={16} />
-            <span>Open Sales Sheet</span>
+            <span>{t.openSalesSheet}</span>
           </button>
           <button className="open-sheet-btn outline" onClick={() => onOpenExcel('invoices')}>
             <FileText size={16} />
-            <span>Open Invoices Sheet</span>
+            <span>{t.openInvoicesSheet}</span>
           </button>
         </div>
       </section>
@@ -1878,7 +2155,7 @@ function InAppExcelViewer({
 
   if (tab === 'sales') {
     currentCols = ['A: Invoice No', 'B: Customer', 'C: Product', 'D: Price', 'E: Discount', 'F: Cost', 'G: Total', 'H: Remarks', 'I: Date'];
-    currentRows = sales.map(s => [s.invoice_no, s.customer_name || 'Walk-in', s.product_name, money(s.price), money(s.discount), money(s.purchase_price), money(s.total), s.remarks || '-', s.created_at?.slice(0, 16)]);
+    currentRows = sales.map(s => [s.invoice_no, s.customer_name || t.walkIn, s.product_name, money(s.price), money(s.discount), money(s.purchase_price), money(s.total), s.remarks || '-', s.created_at?.slice(0, 16)]);
   } else if (tab === 'purchases') {
     currentCols = ['A: Supplier', 'B: Product', 'C: Quantity', 'D: Unit Cost', 'E: Total Cost', 'F: Status', 'G: Expected Date', 'H: Date'];
     currentRows = purchases.map(p => [p.supplier, p.product, p.quantity, money(p.unit_cost), money(p.total), p.status, p.expected_date || '-', p.created_at?.slice(0, 16)]);
@@ -2032,7 +2309,7 @@ function PageSales({ sales, onAdd, onExport, onDel, money, onViewExcel }) {
               sales.map(s => (
                 <tr key={s.id}>
                   <td className="font-mono">{s.invoice_no}</td>
-                  <td>{s.customer_name || 'Walk-in'}</td>
+                  <td>{s.customer_name || t.walkIn}</td>
                   <td>{s.product_name}</td>
                   <td style={{ textAlign: 'right' }}>{money(s.price)}</td>
                   <td style={{ textAlign: 'right' }}>{money(s.discount)}</td>

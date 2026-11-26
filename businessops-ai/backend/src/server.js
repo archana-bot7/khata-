@@ -126,28 +126,33 @@ app.get('/api/health',async(req,res)=>{
 // ─── Khata AI Auth (Authentication & Authorization) ────────────────────────
 app.post('/api/auth/khata-signup',async(req,res)=>{
   try{
+    // Accept separate phone and email fields (not combined)
     const s=z.object({
       userName: z.string().min(1,'User name is required'),
       businessName: z.string().min(1,'Name of the business is required'),
       address: z.string().optional().default(''),
-      phone: z.string().min(3,'Phone number or Gmail account is required'),
+      phone: z.string().min(6,'Phone number is required'),
+      email: z.string().email('A valid Gmail address is required'),
       password: z.string().min(4,'Password must be at least 4 characters')
     }).parse(req.body);
 
-    const input = s.phone.trim();
-    const isEmail = input.includes('@');
-    const email = isEmail ? input.toLowerCase() : input.replace(/[^0-9a-zA-Z]/g,'')+'@khata.ai';
-    const phone = input;
+    const phone = s.phone.trim();
+    const email = s.email.trim().toLowerCase();
 
-    const existing=await db.get(`
-      SELECT * FROM users 
-      WHERE LOWER(phone)=LOWER($1) 
-         OR LOWER(email)=LOWER($2) 
-         OR LOWER(email)=LOWER($3)
-    `,[input, email, phone]);
-
-    if(existing){
-      return res.status(400).json({error:`An account with ${input} already exists. Please log in or reset your password.`});
+    // Check for duplicate phone or email
+    const existingByPhone=await db.get(
+      'SELECT id FROM users WHERE LOWER(phone)=LOWER($1)',
+      [phone]
+    );
+    if(existingByPhone){
+      return res.status(400).json({error:`An account with phone number ${phone} already exists. Please log in or reset your password.`});
+    }
+    const existingByEmail=await db.get(
+      'SELECT id FROM users WHERE LOWER(email)=LOWER($1)',
+      [email]
+    );
+    if(existingByEmail){
+      return res.status(400).json({error:`An account with ${email} already exists. Please log in or reset your password.`});
     }
 
     const hash=await bcrypt.hash(s.password,10);
@@ -171,9 +176,8 @@ app.post('/api/auth/khata-signup',async(req,res)=>{
       };
     });
 
-    const business=await db.get('SELECT * FROM businesses WHERE id=$1',[user.business_id]);
-    const token=jwt.sign({id:user.id,business_id:user.business_id,name:user.name,phone:user.phone,role:'owner'},SECRET,{expiresIn:'30d'});
-    res.status(201).json({token,user,business});
+    // Do NOT return a token — frontend will redirect to login
+    res.status(201).json({ok:true, message:'Account created successfully. Please log in with your Gmail and password.'});
   }catch(e){sendError(res,e)}
 });
 
