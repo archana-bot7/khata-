@@ -5,8 +5,7 @@ Responsive web adaptation of the supplied 27-page BusinessOps AI product specifi
 ## Stack
 - Frontend: React 18, Vite, Recharts, Lucide icons
 - Backend: Node.js 20+ and Express
-- Local development database: SQLite (`better-sqlite3`)
-- Production database foundation: PostgreSQL / Supabase SQL schema in `database/postgres-schema.sql`
+- Database: PostgreSQL (Neon) via `pg` connection pool (`database/neon-schema.sql`)
 - Authentication foundation: bcrypt password hashing and JWT login/register endpoints
 
 ## Run on Windows
@@ -30,7 +29,7 @@ npm run dev
 
 7. Open http://localhost:5173. API health check: http://localhost:4000/api/health.
 
-The first local run creates a demo workspace named **My Business** and a SQLite file at `backend/data/businessops.db`. The local development UI currently uses that demo workspace without requiring sign-in. Registration and login API endpoints are included; production UI authentication and access enforcement still need to be wired before deployment.
+The first run initializes the PostgreSQL schema (`database/neon-schema.sql`) and ensures the default workspace row (**My Business**) exists without overwriting existing data. Registration and login API endpoints are included.
 
 ## Build and production start
 ```powershell
@@ -98,9 +97,9 @@ businessops-ai/
     src/style.css           navy / sky-blue responsive theme
   backend/
     src/server.js           Express API and business workflows
-    src/db.js               SQLite schema and local demo workspace
-    data/                   generated local database (ignored by Git)
+    src/db.js               PostgreSQL (Neon) pool, transactions, and schema init
   database/
-    postgres-schema.sql     PostgreSQL / Supabase schema and RLS starter
+    neon-schema.sql         PostgreSQL / Neon schema and indexes
+    migrate-sqlite-to-pg.mjs  One-time SQLite-to-PostgreSQL data migration script
   .env.example
 ```
