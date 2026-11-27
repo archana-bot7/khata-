@@ -32,7 +32,7 @@ const upload=multer({storage,limits:{fileSize:10*1024*1024},fileFilter:(req,file
 }});
 
 app.use(helmet({crossOriginResourcePolicy:false,contentSecurityPolicy:false}));
-app.use(cors({origin:process.env.CORS_ORIGIN?.split(',')||true}));
+app.use(cors({origin:process.env.CORS_ORIGIN?.split(',').map(s=>s.trim())||true}));
 app.use(express.json({limit:'4mb'}));
 app.use(rateLimit({windowMs:60000,limit:300,standardHeaders:true,legacyHeaders:false}));
 
@@ -45,15 +45,76 @@ const auth=(req,res,next)=>{
   try{req.user=jwt.verify(token,SECRET);next()}
   catch{return res.status(401).json({error:'Session expired. Please sign in again.'})}
 };
-const sendError=(res,e)=>res.status(e.status||400).json({error:e.message||'Request failed'});
+// Shows a clean, readable message for validation errors instead of raw JSON
+const sendError=(res,e)=>res.status(e.status||400).json({error:e.issues?.[0]?.message||e.message||'Request failed'});
 const biz=req=>req.user.business_id;
 
 // ─── Health ────────────────────────────────────────────────────────────────
 app.get('/api/health',(req,res)=>res.json({ok:true,service:'BusinessOps AI API',database:'connected'}));
 
-// ─── Auth ──────────────────────────────────────────────────────────────────
+// ─── Auth (original) ───────────────────────────────────────────────────────
 app.post('/api/auth/register',async(req,res)=>{try{const s=z.object({name:z.string().min(2),email:z.string().email(),password:z.string().min(8),businessName:z.string().min(2),category:z.string().optional(),currency:z.string().default('NPR')}).parse(req.body);const hash=await bcrypt.hash(s.password,12);const tx=db.transaction(()=>{const b=db.prepare('INSERT INTO businesses(name,category,currency) VALUES(?,?,?)').run(s.businessName,s.category||'Retail',s.currency);const u=db.prepare('INSERT INTO users(business_id,name,email,password_hash) VALUES(?,?,?,?)').run(b.lastInsertRowid,s.name,s.email.toLowerCase(),hash);return{id:u.lastInsertRowid,business_id:b.lastInsertRowid,name:s.name,email:s.email,role:'owner'}});const user=tx();const token=jwt.sign(user,SECRET,{expiresIn:'12h'});res.status(201).json({token,user})}catch(e){sendError(res,e)}});
 app.post('/api/auth/login',async(req,res)=>{try{const s=z.object({email:z.string().email(),password:z.string()}).parse(req.body);const u=db.prepare('SELECT * FROM users WHERE email=?').get(s.email.toLowerCase());if(!u||!(await bcrypt.compare(s.password,u.password_hash)))return res.status(401).json({error:'Email or password is incorrect'});const user={id:u.id,business_id:u.business_id,name:u.name,email:u.email,role:u.role};res.json({token:jwt.sign(user,SECRET,{expiresIn:'12h'}),user})}catch(e){sendError(res,e)}});
+
+// ─── Khata AI auth routes (match frontend) ─────────────────────────────────
+const resetCodes = new Map();
+
+app.post('/api/auth/khata-signup', async (req, res) => { try {
+  const s = z.object({
+    userName: z.string().trim().min(2, 'Name is too short'),
+    businessName: z.string().trim().min(2, 'Business name is too short'),
+    address: z.string().optional().default(''),
+    phone: z.string().optional().default(''),
+    email: z.string().trim().email('Enter a valid Gmail'),
+    password: z.string().min(6, 'Password must be at least 6 characters')
+  }).parse(req.body);
+  const email = s.email.toLowerCase();
+  if (db.prepare('SELECT id FROM users WHERE email=?').get(email))
+    return res.status(409).json({ error: 'An account with this Gmail already exists' });
+  const hash = await bcrypt.hash(s.password, 12);
+  db.transaction(() => {
+    const b = db.prepare('INSERT INTO businesses(name,category,currency,address) VALUES(?,?,?,?)')
+      .run(s.businessName, 'Retail', 'NPR', s.address);
+    db.prepare('INSERT INTO users(business_id,name,email,password_hash) VALUES(?,?,?,?)')
+      .run(b.lastInsertRowid, s.userName, email, hash);
+  })();
+  res.status(201).json({ ok: true });
+} catch (e) { sendError(res, e) } });
+
+app.post('/api/auth/khata-login', async (req, res) => { try {
+  const s = z.object({ email: z.string().trim().email('Enter a valid Gmail'), password: z.string().min(1, 'Enter your password') }).parse(req.body);
+  const u = db.prepare('SELECT * FROM users WHERE email=?').get(s.email.toLowerCase());
+  if (!u || !(await bcrypt.compare(s.password, u.password_hash)))
+    return res.status(401).json({ error: 'Gmail or password is incorrect' });
+  const user = { id: u.id, business_id: u.business_id, name: u.name, email: u.email, role: u.role };
+  const business = db.prepare('SELECT * FROM businesses WHERE id=?').get(u.business_id);
+  res.json({ token: jwt.sign(user, SECRET, { expiresIn: '12h' }), user, business });
+} catch (e) { sendError(res, e) } });
+
+// NOTE: returns the code in the response because email sending is not set up yet.
+// Fine for testing; replace with real email delivery before real users sign up.
+app.post('/api/auth/forgot-password', (req, res) => { try {
+  const id = String(req.body.phone || '').trim().toLowerCase();
+  if (!id) return res.status(400).json({ error: 'Please enter your Gmail account' });
+  const u = db.prepare('SELECT id FROM users WHERE email=?').get(id);
+  if (!u) return res.status(404).json({ error: 'No account found with this Gmail' });
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  resetCodes.set(id, { code, expires: Date.now() + 10 * 60 * 1000 });
+  res.json({ message: 'Verification code generated', isEmail: true, emailSent: false, code });
+} catch (e) { sendError(res, e) } });
+
+app.post('/api/auth/reset-password', async (req, res) => { try {
+  const id = String(req.body.phone || '').trim().toLowerCase();
+  const entry = resetCodes.get(id);
+  if (!entry || entry.code !== String(req.body.code || '').trim() || Date.now() > entry.expires)
+    return res.status(400).json({ error: 'Invalid or expired code' });
+  if (String(req.body.newPassword || '').length < 6) throw Error('Password must be at least 6 characters');
+  const hash = await bcrypt.hash(req.body.newPassword, 12);
+  db.prepare('UPDATE users SET password_hash=? WHERE email=?').run(hash, id);
+  resetCodes.delete(id);
+  res.json({ ok: true });
+} catch (e) { sendError(res, e) } });
+
 app.get('/api/me',auth,(req,res)=>{const b=db.prepare('SELECT * FROM businesses WHERE id=?').get(req.user.business_id);res.json({user:req.user,business:b||{id:1,name:'My Business',currency:'NPR'}})});
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────
@@ -290,8 +351,11 @@ app.put('/api/settings',auth,(req,res)=>{
   res.json(db.prepare('SELECT * FROM businesses WHERE id=?').get(biz(req)));
 });
 
-// ─── Production static serve ───────────────────────────────────────────────
+// ─── Production static serve (only if a built frontend exists next to the backend) ─
 const dist=path.resolve(__dirname,'../../frontend/dist');
-if(process.env.NODE_ENV==='production'){app.use(express.static(dist));app.get('*',(req,res)=>res.sendFile(path.join(dist,'index.html')))}
+if(process.env.NODE_ENV==='production' && fs.existsSync(path.join(dist,'index.html'))){
+  app.use(express.static(dist));
+  app.get('*',(req,res)=>res.sendFile(path.join(dist,'index.html')));
+}
 
-app.listen(PORT,()=>console.log(`BusinessOps API listening on https://khata-ai-69e93.web.app`));
+app.listen(PORT,()=>console.log(`BusinessOps API listening on port ${PORT}`));
